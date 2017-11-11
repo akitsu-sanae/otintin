@@ -1,0 +1,9 @@
+[package]
+name = "otintin"
+version = "0.1.0"
+authors = ["akitsu-sanae <akitsu.sanae@gmail.com>"]
+
+[dependencies.nom]
+version = "^3.2"
+features = ["regexp"]
+

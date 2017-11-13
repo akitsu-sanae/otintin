@@ -6,6 +6,11 @@ extern crate nom;
 
 mod parser;
 mod expr;
+mod value;
+mod typ;
+mod eval;
+
+use eval::Env;
 
 use nom::IResult;
 
@@ -22,7 +27,11 @@ fn main() {
             }).unwrap();
 
             match parser::expr(input.as_bytes()) {
-                IResult::Done(_, res) => println!("ok {}", res),
+                IResult::Done(_, res) => {
+                    println!("ok {}", res);
+                    let v = eval::eval(&res, &Env::new());
+                    println!("result: {:?}", v);
+                }
                 err => println!("error: {:?}", err),
             }
         },

@@ -1,6 +1,8 @@
 
+
+
 pub enum Type {
     Int,
-    Arrow(Box<Type, Box<Type>),
+    Arrow(Box<Type>, Box<Type>),
 }
 

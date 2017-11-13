@@ -6,13 +6,12 @@ extern crate nom;
 
 mod parser;
 mod expr;
-mod value;
 mod typ;
 mod eval;
-
-use eval::Env;
+mod env;
 
 use nom::IResult;
+use env::Env;
 
 fn main() {
     use std::env;

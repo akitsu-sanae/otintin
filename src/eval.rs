@@ -1,30 +1,10 @@
 use expr::{BinOp, Expr};
-use value::Value;
+use env::Env;
 
 #[derive(Debug, Clone)]
-pub struct Env {
-    data: Vec<(String, Value)>,
-}
-
-impl Env {
-    pub fn new() -> Self {
-        Self {
-            data: vec![],
-        }
-    }
-    fn push(&self, key: String, val: Value) -> Env {
-        let mut new_env = self.clone();
-        new_env.data.push((key, val));
-        new_env
-    }
-    fn lookup(&self, name:&String) -> Result<Value, String> {
-        for &(ref key, ref val) in self.data.iter().rev() {
-            if key == name {
-                return Ok(val.clone());
-            }
-        }
-        Err(format!("unbound variable: {}", name))
-    }
+pub enum Value {
+    Int(i64),
+    Func(String, Box<Expr>),
 }
 
 macro_rules! eval_binop {
@@ -38,7 +18,7 @@ macro_rules! eval_binop {
     };
 }
 
-pub fn eval(e: &Expr, env: &Env) -> Result<Value, String> {
+pub fn eval(e: &Expr, env: &Env<Value>) -> Result<Value, String> {
     match *e {
         Expr::Int(ref n) => Ok(Value::Int(*n)),
         Expr::Var(ref name) => env.lookup(name),

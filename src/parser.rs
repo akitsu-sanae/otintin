@@ -36,11 +36,27 @@ fn valid_ident_chars<T>(input: T) -> IResult<T, T> where
     IResult::Done(input.slice(input_length..), input)
 }
 
+fn valid_ident(s: String) -> Result<String, String> {
+    const keywords: [&str; 4] = [
+        "Int", "func", "let", "in",
+    ];
+    for keyword in keywords.iter() {
+        if keyword == &s {
+            return Err(format!("{} is keyword, but used as identifier", s))
+        }
+    }
+    Ok(s)
+}
+
 named!(identifier<String>, do_parse!(
-    head: map_res!(alpha, str::from_utf8) >>
-    tail: opt!(map_res!(valid_ident_chars, str::from_utf8)) >>
+    e:map_res!(
+        do_parse!(
+            head: map_res!(alpha, str::from_utf8) >>
+            tail: opt!(map_res!(valid_ident_chars, str::from_utf8)) >>
+            (format!("{}{}", head, if let Some(x) = tail { x } else { "" }))),
+        valid_ident) >>
     opt!(multispace) >>
-    (format!("{}{}", head, if let Some(x) = tail { x } else { "" }))
+    (e)
 ));
 
 named!(primitive_type<Type>, alt!(
@@ -93,7 +109,7 @@ named!(literal_func<Expr>, do_parse!(
     tag!("=>") >>
     opt!(multispace) >>
     e: expr >>
-    (Expr::Func("x".to_string(), ty, box e))
+    (Expr::Func(x, ty, box e))
 ));
 
 named!(variable_expr<Expr>, map!(
@@ -111,7 +127,6 @@ named!(apply_expr<Expr>, do_parse!(
     init: primary_expr >>
     remainder: many0!(
         do_parse!(
-            tag!("@") >>
             opt!(multispace) >>
             e: primary_expr >>
             (e))) >>

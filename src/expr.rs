@@ -39,7 +39,7 @@ impl Display for Expr {
             Func(ref x, ref ty, box ref e) =>
                 write!(format, "(func {}: {} => {})", x, ty, e),
             App(box ref lhs, box ref rhs) =>
-                write!(format, "({}@{})", lhs, rhs),
+                write!(format, "({} {})", lhs, rhs),
             Let(ref x, box ref e1, box ref e2) =>
                 write!(format, "let {} = {} in {}", x, e1, e2),
         }

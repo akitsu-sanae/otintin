@@ -30,7 +30,7 @@ pub fn eval(e: &Expr, env: &Env<Value>) -> Result<Value, String> {
             eval_binop!(lhs, rhs, env, |l, r| l*r, "mult"),
         Expr::BinOp(BinOp::Div, box ref lhs, box ref rhs) =>
             eval_binop!(lhs, rhs, env, |l, r| l/r, "divide"),
-        Expr::Func(ref x, box ref e) => Ok(Value::Func(x.clone(), box e.clone())),
+        Expr::Func(ref x, _, box ref e) => Ok(Value::Func(x.clone(), box e.clone())),
         Expr::App(box ref e1, box ref e2) => {
             match (eval(e1, env)?, eval(e2, env)?) {
                 (Value::Func(x, box body), v) => {

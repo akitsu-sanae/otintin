@@ -4,6 +4,7 @@ use nom::{IResult, digit, alpha, multispace, Slice, InputIter, AsChar, InputLeng
 
 use expr::BinOp;
 use expr::Expr;
+use typ::Type;
 
 
 fn valid_ident_chars<T>(input: T) -> IResult<T, T> where
@@ -42,6 +43,37 @@ named!(identifier<String>, do_parse!(
     (format!("{}{}", head, if let Some(x) = tail { x } else { "" }))
 ));
 
+named!(primitive_type<Type>, alt!(
+    do_parse!(
+        tag!("Int") >>
+        opt!(multispace) >>
+        (Type::Int)) |
+    do_parse!(
+        tag!("(") >>
+        opt!(multispace) >>
+        ty: arrow_type >>
+        tag!(")") >>
+        opt!(multispace) >>
+        (ty))
+));
+
+named!(arrow_type<Type>, alt!(
+    do_parse!(
+        head: primitive_type >>
+        tag!("->") >>
+        opt!(multispace) >>
+        tail: arrow_type >>
+        (Type::Arrow(box head, box tail))) |
+    primitive_type
+));
+
+named!(type_notation<Type>, do_parse!(
+    tag!(":") >>
+    multispace >>
+    ty: arrow_type >>
+    (ty)
+));
+
 named!(literal_int<Expr>, map!(
     map_res!(
         map_res!(
@@ -57,10 +89,11 @@ named!(literal_func<Expr>, do_parse!(
     tag!("func") >>
     multispace >>
     x: identifier >>
-    tag!("->") >>
+    ty: type_notation >>
+    tag!("=>") >>
     opt!(multispace) >>
     e: expr >>
-    (Expr::Func("x".to_string(), box e))
+    (Expr::Func("x".to_string(), ty, box e))
 ));
 
 named!(variable_expr<Expr>, map!(
@@ -123,24 +156,40 @@ named!(additive_expr<Expr>, do_parse!(
     (fold_exprs(init, remainder))
 ));
 
-named!(let_expr<Expr>, alt!(
-    do_parse!(
-        tag!("let") >>
-        multispace >>
-        x: identifier >>
-        tag!("=") >>
-        opt!(multispace) >>
-        e1: expr >>
-        tag!("in") >>
-        multispace >>
-        e2: expr >>
-        (Expr::Let(x, box e1, box e2))) |
-    additive_expr
+named!(let_expr<Expr>, do_parse!(
+    tag!("let") >>
+    multispace >>
+    x: identifier >>
+    tag!("=") >>
+    opt!(multispace) >>
+    e1: expr >>
+    tag!("in") >>
+    multispace >>
+    e2: expr >>
+    (Expr::Let(x, box e1, box e2))
+));
+
+named!(func_expr<Expr>, do_parse!(
+    tag!("func") >>
+    multispace >>
+    name: identifier >>
+    x: identifier >>
+    ty: type_notation >>
+    e: do_parse!(
+        tag!("{") >> opt!(multispace) >>
+        e:expr >>
+        tag!("}") >> opt!(multispace) >>
+        (e)) >>
+    after: expr >>
+    (Expr::Let(
+            name,
+            box Expr::Func(x, ty, box e),
+            box after))
 ));
 
 named!(pub expr<Expr>, do_parse!(
     opt!(multispace) >>
-    e: let_expr >>
+    e: alt!(let_expr | func_expr | additive_expr) >>
     (e)
 ));
 

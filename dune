@@ -1,0 +1,11 @@
+(executables
+ (names main)
+ (public_names otintin)
+ (libraries
+  batteries
+  )
+ (package otintin))
+
+(ocamllex (modules lexer))
+(menhir (modules parser))
+
